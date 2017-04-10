@@ -4,7 +4,6 @@ import json
 from paper_scan import PaperScan
 from options import DEBUG
 
-
 # Adaptive threshold
 THR_MAX_VAL = 255
 THR_BLOCK_SIZE = 29
@@ -19,12 +18,24 @@ REF_PT_RANGE = 0.012
 
 
 class RawPhoto:
+    """
+    Represents each physical, raw photo taken by the user that is to be processed.
+    Each raw photo can contains multiple test papers, so there is a list of PaperScan objects in each RawPhoto object.
+    When used, initialize a RawPhoto object and call dump_data() on it to get the results.
+    """
     raw_img = None
     thr_img = None
     paper_objs = None
     metadata = ''
 
     def __init__(self, raw_image, num_papers):
+        """
+        Initializes the RawPhoto object.
+        The only function that needs to be call (to the RawPhoto object itself) when processing a new photo. All other
+        functions (other than dump_data()) are called by this top-level initializer.
+        :param raw_image: image loaded by cv2.imread()
+        :param num_papers: number of papers in the photo
+        """
         self.metadata = ''
         self.num_papers = []
         self.raw_img = raw_image
@@ -38,6 +49,8 @@ class RawPhoto:
         # Find contours
         # contours = cv2.findContours(self.thr_img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         _, contours, _ = cv2.findContours(self.thr_img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        # temporary fix to known issue of a certain version of OpenCV. Depending on OpenCV version, might need to
+        # change this line to read `contours, _ = ...`
         # CV_RETR_LIST retrieves all of the contours without establishing any hierarchical relationships.
         # CV_CHAIN_APPROX_SIMPLE compresses horizontal, vertical, and diagonal segments and leaves only end points.
 
@@ -57,6 +70,13 @@ class RawPhoto:
         self.paper_objs = self.extract_papers(approximations, num_papers)
 
     def extract_papers(self, approximations, num_papers):
+        """
+        Identify the papers in the photo and initialize the list of PaperScan objects.
+        :param approximations: a dictionary of rectangles in the image (rectangle area -> rectangle vertices)
+                               where each rectangle is the outer edge of the table on the paper
+        :param num_papers: number of papers in the image
+        :return: a list of paper objects
+        """
         sizes = sorted(list(approximations.keys()))
         sizes.reverse()
         papers = []
@@ -75,10 +95,17 @@ class RawPhoto:
                                   [raw_refs[3][0], raw_refs[3][1]]])
             trans_matrix = cv2.getPerspectiveTransform(ref_pts, TEMPLATE_KEY_PTS)
             paper = cv2.warpPerspective(self.raw_img, trans_matrix, PAPER_SIZE)
+            # Need to re-threshold raw photo (in PaperScan) because warpPerspective() largely reduces the quality of
+            # the original binary image
             papers.append(PaperScan(paper))
         return papers
 
     def orientate_vertices(self, approx):
+        """
+        Orientate a paper region based on the black bock besides the left edge.
+        :param approx: vertices of the paper rectangle
+        :return: transformed vertices of the paper rectangle
+        """
         # Define corner points
         A = approx[0][0]
         B = approx[1][0]
@@ -120,6 +147,10 @@ class RawPhoto:
                 transform[(r_id + 2) % 4], transform[(r_id + 3) % 4])
 
     def dump_data(self):
+        """
+        Dumps data to a JSON string
+        :return: JSON string
+        """
         data_dict = {'papers': [],
                      'metadata': self.metadata}
         for paper in self.paper_objs:

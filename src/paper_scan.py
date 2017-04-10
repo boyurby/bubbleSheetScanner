@@ -34,6 +34,13 @@ IDX_TO_LETTER = ['A', 'B', 'C', 'D', 'E']
 
 
 def remove_edges(ans_img_raw, ans_img_thr):
+    """
+    Trims the edges of each block by traversing lines inverse until we _hit and pass_ a black line.
+    Four sides are rather repetitive and could be refactored.
+    :param ans_img_raw: raw image of the answer block
+    :param ans_img_thr: binary image of the answer block
+    :return: trimmed image of the answer block, raw and binary (we need the raw picture for reading the answers)
+    """
     h, w = ans_img_thr.shape[:2]
 
     # Top
@@ -88,6 +95,9 @@ def remove_edges(ans_img_raw, ans_img_thr):
 
 
 class PaperScan:
+    """
+    Models each answer sheet paper.
+    """
     raw_img = None
     thr_img = None
     test_id = None
@@ -99,6 +109,11 @@ class PaperScan:
     json_res = None
 
     def __init__(self, raw_img):
+        """
+        Initializes and processes the paper. This is the only top-level function that needs to be called.
+        Called only by its parent RawPhoto object.
+        :param raw_img: raw paper image
+        """
         self.raw_img = raw_img
         self.thr_img = cv2.adaptiveThreshold(self.raw_img, THR_MAX_VAL, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                              cv2.THRESH_BINARY_INV, THR_BLOCK_SIZE, THR_OFFSET)
@@ -112,6 +127,9 @@ class PaperScan:
         self.json_res = json.dumps(data_dict)
 
     def read_datamatrix(self):
+        """
+        Reads the content datamatrix on the paper.
+        """
         datamatrix_region = self.thr_img[DATAMATRIX_REGION[0]:DATAMATRIX_REGION[1],
                                          DATAMATRIX_REGION[2]:DATAMATRIX_REGION[3]]
         try:
@@ -126,6 +144,9 @@ class PaperScan:
             print('Test id: %s\tPaper id: %s' % (self.test_id, self.paper_id))
 
     def segment(self):
+        """
+        Segment the image into pieces of answer blocks
+        """
         for i in range(NUM_QUESTIONS):
             col = int(i / NUM_ROWS)
             row = i % NUM_ROWS
@@ -143,6 +164,12 @@ class PaperScan:
                 cv2.imwrite("../tmp/ans-img-raw-%s-%s-%d.png" % (self.test_id, self.paper_id, i), ans_img_raw)
 
     def read_answer(self):
+        """
+        Read the selection of each answer block
+        Read from the raw image because Gaussian Adaptive Threshold treats any large block of content, either dark or
+        bright, as background. Therefore, only the edges of the circles is detected. We need the inside content of the
+        circle for accuracy.
+        """
         for i in range(NUM_QUESTIONS):
             img = self.ans_imgs_raw[i]
 
