@@ -114,9 +114,14 @@ class PaperScan:
     def read_datamatrix(self):
         datamatrix_region = self.thr_img[DATAMATRIX_REGION[0]:DATAMATRIX_REGION[1],
                                          DATAMATRIX_REGION[2]:DATAMATRIX_REGION[3]]
-        content = decode(datamatrix_region, timeout=READ_DATAMATRIX_TIMEOUT)[0][0]
-        self.test_id = content[:DATAMATRIX_SPLIT]
-        self.paper_id = content[DATAMATRIX_SPLIT:]
+        try:
+            content = decode(datamatrix_region, timeout=READ_DATAMATRIX_TIMEOUT)[0][0]
+            self.test_id = content[:DATAMATRIX_SPLIT]
+            self.paper_id = content[DATAMATRIX_SPLIT:]
+        except:
+            self.test_id = '?????'
+            self.paper_id = '???'
+            self.metadata += 'Could not decode datamatrix.\n'
         if DEBUG:
             print('Test id: %s\tPaper id: %s' % (self.test_id, self.paper_id))
 

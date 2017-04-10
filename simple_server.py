@@ -13,7 +13,7 @@ PORT = 8012
 URL_HEAD = '/scanner/check-now'
 
 
-class MyHandler(BaseHTTPRequestHandler):
+class RequestHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         self.send_response(200)
@@ -78,5 +78,5 @@ class MyHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    httpd = SocketServer.TCPServer(("", PORT), MyHandler)
+    httpd = SocketServer.TCPServer(("", PORT), RequestHandler)
     httpd.serve_forever()
