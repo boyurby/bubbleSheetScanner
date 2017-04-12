@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import json
-from paper_scan import PaperScan
+from paper_scan import PaperScan, MAX_NUM_QUESTIONS
 from options import DEBUG
 
 # Adaptive threshold
@@ -26,25 +26,28 @@ class RawPhoto:
     raw_img = None
     thr_img = None
     paper_objs = None
+    num_questions = 0
     metadata = ''
 
-    def __init__(self, raw_image, num_papers):
+    def __init__(self, raw_image, num_papers, num_questions=MAX_NUM_QUESTIONS):
         """
         Initializes the RawPhoto object.
         The only function that needs to be call (to the RawPhoto object itself) when processing a new photo. All other
         functions (other than dump_data()) are called by this top-level initializer.
         :param raw_image: image loaded by cv2.imread()
         :param num_papers: number of papers in the photo
+        :param num_questions: number of questions in the paper
         """
         self.metadata = ''
         self.num_papers = []
         self.raw_img = raw_image
+        self.num_questions = num_questions
 
         # Threshold original image
         self.thr_img = cv2.adaptiveThreshold(self.raw_img, THR_MAX_VAL, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                              cv2.THRESH_BINARY_INV, THR_BLOCK_SIZE, THR_OFFSET)
         if DEBUG:
-            cv2.imwrite("../tmp/self_th.png", self.thr_img)
+            cv2.imwrite("tmp/self_th.png", self.thr_img)
 
         # Find contours
         # contours = cv2.findContours(self.thr_img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -97,7 +100,9 @@ class RawPhoto:
             paper = cv2.warpPerspective(self.raw_img, trans_matrix, PAPER_SIZE)
             # Need to re-threshold raw photo (in PaperScan) because warpPerspective() largely reduces the quality of
             # the original binary image
-            papers.append(PaperScan(paper))
+            if DEBUG:
+                cv2.imwrite("tmp/paper%d.png" % i, paper)
+            papers.append(PaperScan(paper, self.num_questions))
         return papers
 
     def orientate_vertices(self, approx):
@@ -128,6 +133,9 @@ class RawPhoto:
         L = (int(F[0] + REF_PT_RATIO * (H[0] - F[0])),
              int(F[1] + REF_PT_RATIO * (H[1] - F[1])))
 
+        if DEBUG:
+            print I, J, K, L
+
         # Check brightnesses
         brightnesses = []
         offset = int(REF_PT_RANGE * ((A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2) ** 0.5)
@@ -139,6 +147,7 @@ class RawPhoto:
                 for j in range(offset * 2):
                     brightness += self.raw_img[j_base + j][i_base + i]
             brightnesses.append(brightness)
+        print brightnesses
 
         # Orientate rectangle
         r_id = brightnesses.index(min(brightnesses))
