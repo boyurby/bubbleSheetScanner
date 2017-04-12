@@ -50,6 +50,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             print('> WRONG API KEY')
             return
 
+        try:
+            num_papers = int(num_papers)
+            num_questions = int(num_questions)
+        except:
+            print('> CANNOT PARSE `num_papers` OR `num_questions` TO INTEGERS')
+            return
+
         print('> PROCESSING REQUEST...')
         try:
             print('  - downloading raw photo')
