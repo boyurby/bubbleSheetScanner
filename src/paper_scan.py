@@ -212,7 +212,7 @@ class PaperScan:
                         this_brightness += img[x, y]
                 if this_brightness < lowest_val:
                     lowest_val, lowest_idx = this_brightness, j
-            self.marked_ans[i] = [IDX_TO_LETTER[lowest_idx]]
+            self.marked_ans[i] = IDX_TO_LETTER[lowest_idx]
 
     def raad_all_answers_multiple(self):
         """
@@ -254,10 +254,10 @@ class PaperScan:
 
             # Select answers
             threshold = min_ref + (max_ref - min_ref) * GAP_THRESHOLD
-            ans = []
+            ans = ''
             for j in range(NUM_OPTIONS):
                 if brightness[j] < threshold:
-                    ans.append(IDX_TO_LETTER[j])
+                    ans += IDX_TO_LETTER[j]
             self.marked_ans[i] = ans
             if DEBUG:
                 print('Test %s, Paper %s, Question %d: %s' % (self.test_id, self.paper_id, i + 1, ans))
