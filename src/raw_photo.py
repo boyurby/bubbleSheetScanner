@@ -68,9 +68,20 @@ class RawPhoto:
             if (len(approx) != 4) or (not cv2.isContourConvex(approx)):
                 continue
             approximations[cv2.contourArea(approx)] = approx
+            # print '> ', approx
+            if DEBUG:
+                pts = np.array([[approx[0][0][0], approx[0][0][1]],
+                                [approx[1][0][0], approx[1][0][1]],
+                                [approx[2][0][0], approx[2][0][1]],
+                                [approx[3][0][0], approx[3][0][1]]], np.int32)
+                pts = pts.reshape((-1, 1, 2))
+                cv2.polylines(self.raw_img, [pts], True, (255, 255, 255))
 
         # Extract each individual paper
         self.paper_objs = self.extract_papers(approximations, num_papers)
+
+        if DEBUG:
+            cv2.imwrite("tmp/paperSelectionTest.png", self.raw_img)
 
     def extract_papers(self, approximations, num_papers):
         """
