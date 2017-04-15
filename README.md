@@ -1,9 +1,9 @@
 # Bubble Sheet Scanner
 
 Allows teachers to scan multiple-choice question answer sheets by taking a
-pictures of them by their phones.
+picture of them by a smart phone.
 
-`RawPhoto` and `PaperScan` are the implementation of the core functionalities
+`RawPhoto` and `PaperScan` implement of the core functionalities
 and `RequestHandler` acts as an API that takes input from GET request when
 hosted on a server.
 
@@ -21,11 +21,11 @@ developed.
   the papers, unless they are significantly smaller than the largest identified
   table (since all papers should have approximately the same size)
 - For each of these tables:
-  - Based on the four corner points, the midpoints of each side is identified
-  - Based on the midpoints of each side, the points just outside the midpoints
+  - Based on the four corner points, the midpoint of each side is identified
+  - Based on the midpoint of each side, the points just outside the midpoints
     are identified as reference points
-  - The reference point with the darkest neighbor is on the left side due to
-    the black rectangle on the bubble sheet template
+  - The reference point with the darkest neighborhood region is on the left
+    side due to the black rectangle on the bubble sheet template
   - The table is oriented to the correct direction
   - A perspective transformation is applied to the rectangle and the corners
     are mapped to the corresponding locations of the template
@@ -38,7 +38,7 @@ developed.
     - The answer field is now accurately aligned with the template
     - The answer field is segmented into 5 regions (one for each option)
     - The darkest region is considered to be marked by the student. The answer
-      for this question is obtained
+      to this question is obtained
   - All data associated with this paper are obtained
 - All data associated with this raw image are obtained
 
@@ -52,7 +52,7 @@ This scanner can be used by creating a RawPhoto class from a raw photo taken:
 ```Python
 def direct_use(image_path):
     test_img = cv2.imread(image_path, 0)
-    rp = RawPhoto(test_img, 2, 30)
+    rp = RawPhoto(test_img, num_papers=2, num_questions=30)
     res = rp.dump_data()
 ```
 
@@ -102,8 +102,3 @@ In practice, being unable to decode the datamatrix usually indicates that the
 entire paper is not read correctly. The rest of the returned data of that paper
 are hence not reliable. If the program reads the datamatrix correctly, however
 the answers are very likely to be correctly read.
-
-
-## TODOs
-- Refactor bubble sheet generator code
-- Android app development
